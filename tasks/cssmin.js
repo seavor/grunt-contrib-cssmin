@@ -19,11 +19,8 @@ module.exports = function (grunt) {
   var chunkString = function(string, hash){
     var breakChar = '{',
         charCounter = hash,
-        remainderString = string,
-
         currentChar = '',
-        tempString  = '',
-        compareString = '',
+        remainderString = string,
         compiledString = '';
 
         (function parseString(){
@@ -52,23 +49,18 @@ module.exports = function (grunt) {
             } else {
               charCounter--;
             }
-
+            
+            // remainderString has enough to keep parsing, recall self
             parseString();
 
-          } else {
-            compiledString = compiledString.concat(remainderString);
-          }
+          // We've reached the end of the line, append the rest and return compiledString
+          } else { compiledString = compiledString.concat(remainderString); }
         })();
 
     return compiledString;
   };
 
   grunt.registerMultiTask('cssmin', 'Minify CSS', function () {
-    var created = {
-      maps: 0,
-      files: 0
-    };
-
     this.files.forEach(function (file) {
       var options = this.options({
         rebase: false,
@@ -97,7 +89,6 @@ module.exports = function (grunt) {
       if (options.sourceMap) {
         compiledCssString += '\n' + '/*# sourceMappingURL=' + path.basename(file.dest) + '.map */';
         grunt.file.write(file.dest + '.map', compiled.sourceMap.toString());
-        created.maps++;
         grunt.verbose.writeln('File ' + chalk.cyan(file.dest + '.map') + ' created');
       }
 
@@ -108,18 +99,7 @@ module.exports = function (grunt) {
       }
 
       grunt.file.write(file.dest, compiledCssString);
-      created.files++;
       grunt.verbose.writeln('File ' + chalk.cyan(file.dest) + ' created ' + chalk.dim(maxmin(unCompiledCssString, compiledCssString, options.report === 'gzip')));
     }, this);
-
-    if (created.maps > 0) {
-      grunt.log.ok(created.maps + ' source' + grunt.util.pluralize(this.files.length, 'map/maps') + ' created.');
-    }
-
-    if (created.files > 0) {
-      grunt.log.ok(created.files + ' ' + grunt.util.pluralize(this.files.length, 'file/files') + ' created.');
-    } else {
-      grunt.log.warn('No files created.');
-    }
   });
 };
